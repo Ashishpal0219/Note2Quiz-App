@@ -1,0 +1,12 @@
+streamlit
+pandas
+python-docx
+PyPDF2
+python-dotenv
+spacy
+google-generativeai
+# requests is usually installed as a dependency, but add if needed
+# torch might be needed depending on spacy/transformer backend
+# ReportLab is not used in the final version, so omit it
+# tf-keras is not needed if only using Gemini
+openpyxl # Good practice if pandas might handle excel
