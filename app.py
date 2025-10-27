@@ -37,15 +37,15 @@ def load_spacy_model():
     """Loads the spaCy language model, downloading if necessary."""
     model_name = "en_core_web_sm"
     try:
-        if not spacy.util.is_package(model_name):
+        #if not spacy.util.is_package(model_name):
              # Show spinner in the main app area during download
-             with st.spinner(f"Downloading required spaCy model ('{model_name}')... This may take a moment."):
-                  print(f"DEBUG: Downloading spaCy model {model_name}...")
-                  spacy.cli.download(model_name)
-                  print(f"DEBUG: Finished downloading spaCy model.")
+             #with st.spinner(f"Downloading required spaCy model ('{model_name}')... This may take a moment."):
+                #  print(f"DEBUG: Downloading spaCy model {model_name}...")
+                 # spacy.cli.download(model_name)
+                 # print(f"DEBUG: Finished downloading spaCy model.")
              # Use st.rerun() if download happens mid-session to ensure UI updates
              # st.rerun() # Or show toast and let user retry action
-             st.toast("spaCy model downloaded.", icon="✅")
+             #st.toast("spaCy model downloaded.", icon="✅")
         print("DEBUG: Loading spaCy model...")
         model = spacy.load(model_name)
         print("DEBUG: spaCy model loaded successfully.")

@@ -10,3 +10,4 @@ google-generativeai
 # ReportLab is not used in the final version, so omit it
 # tf-keras is not needed if only using Gemini
 openpyxl # Good practice if pandas might handle excel
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
