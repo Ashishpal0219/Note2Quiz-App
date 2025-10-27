@@ -1,0 +1,29 @@
+# Environment variables (API Keys!)
+.env
+
+# Python virtual environment
+.venv/
+venv/
+*/.venv/
+*/venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database file
+database/question_bank.db
+
+# Exported files folder
+exports/
+
+# VS Code specific settings (optional)
+.vscode/
+
+# Temporary files or OS files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
