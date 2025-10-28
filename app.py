@@ -109,6 +109,42 @@ h2 { color: #0d6efd; }
 h3, h4, h5 { color: #495057; }
 /* Captions */
 .stCaption { color: #6c757d; font-size: 0.9em; }
+/* --- Responsive Design Adjustments --- */
+@media (max-width: 768px) {
+    /* Target Streamlit's internal column container */
+    div[data-testid="stHorizontalBlock"] {
+        flex-direction: column; /* Stack columns vertically */
+    }
+
+    /* Adjust padding for main content widgets on smaller screens */
+    .stTextArea,
+    .stSelectbox,
+    .stMultiselect,
+    .stSlider,
+    [data-testid="stExpander"],
+    [data-testid="stDataFrame"] {
+        padding: 10px; /* Reduce padding slightly */
+    }
+
+    /* Reduce font size for headers slightly */
+    h1 {
+        font-size: 1.8em;
+    }
+    h2 {
+        font-size: 1.4em;
+    }
+    h3 {
+         font-size: 1.1em;
+    }
+
+    /* Adjust sidebar padding if needed */
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 1rem;
+    }
+
+    /* Make text area slightly smaller if needed */
+    /* .stTextArea { height: 300px; } */ /* Keep commented unless needed */
+}
 /* DataFrames */
 [data-testid="stDataFrame"] { border: none; }
 [data-testid="stDataFrame"] thead th { background-color: #e9ecef; color: #343a40; font-weight: 600; border-bottom: 2px solid #adb5bd; }
@@ -466,51 +502,65 @@ if st.session_state.get("show_bank", False):
 
         with filter_cols[0]:
             # Use keys for selectboxes to preserve their state across reruns caused by other filters
-            selected_topic_filter = st.selectbox("By Topic:", topics_in_bank, key="filter_topic", index=0 if 'filter_topic' not in st.session_state else topics_in_bank.index(st.session_state.filter_topic))
+            selected_topic_filter = st.selectbox("By Topic:", topics_in_bank, key="filter_topic")
         with filter_cols[1]:
-            selected_type_filter = st.selectbox("By Type:", types_in_bank, key="filter_type", index=0 if 'filter_type' not in st.session_state else types_in_bank.index(st.session_state.filter_type))
+            selected_type_filter = st.selectbox("By Type:", types_in_bank, key="filter_type")
         with filter_cols[2]:
-            selected_diff_filter = st.selectbox("By Difficulty:", diff_in_bank, key="filter_diff", index=0 if 'filter_diff' not in st.session_state else diff_in_bank.index(st.session_state.filter_diff))
+            selected_diff_filter = st.selectbox("By Difficulty:", diff_in_bank, key="filter_diff")
 
         # --- Apply Filters ---
+        # Start with the full dataframe
         filtered_df = bank_df_full.copy()
+
+        # Apply filters sequentially ONLY if a specific filter (not 'All') is selected
         if selected_topic_filter != 'All' and 'topic' in filtered_df.columns:
             filtered_df = filtered_df[filtered_df['topic'].astype(str) == str(selected_topic_filter)]
+
         if selected_type_filter != 'All' and 'question_type' in filtered_df.columns:
             filtered_df = filtered_df[filtered_df['question_type'].astype(str) == str(selected_type_filter)]
+
         if selected_diff_filter != 'All' and 'difficulty' in filtered_df.columns:
             filtered_df = filtered_df[filtered_df['difficulty'].astype(str) == str(selected_diff_filter)]
 
+
+        # --- Add Clear Bank Button (Top Right Aligned) ---
+        # Use columns to align the clear button section to the right
+        col_title, col_clear_btn = st.columns([4, 1]) # Adjust ratio as needed
+
+        with col_title:
+             st.markdown("##### Filtered Questions") # Title for the table
+
+        with col_clear_btn:
+            # Use st.expander for a less intrusive confirmation
+            with st.expander("🗑️ Clear Bank"):
+                 st.session_state.confirm_clear = st.checkbox(
+                     "Confirm Deletion",
+                     key="confirm_clear_checkbox_inside_expander",
+                     value=st.session_state.get("confirm_clear", False),
+                     help="Check this box to enable the clear button."
+                 )
+                 # Place the button inside the expander
+                 if st.button("Clear All Questions", type="secondary", disabled=not st.session_state.confirm_clear, key="clear_bank_btn_expander"):
+                      if st.session_state.confirm_clear:
+                          with st.spinner("Clearing question bank..."):
+                              success = clear_question_bank() # Call the function from utils.py
+                          if success:
+                              st.success("Bank cleared!")
+                              st.session_state.confirm_clear = False # Reset checkbox state
+                              # Clear related filter states? Optional.
+                              st.rerun() # Rerun to refresh the view
+                          else:
+                              st.error("Failed to clear bank.")
+                      # No else needed as button is disabled if not confirmed
+
+
         # --- Display Filtered DataFrame ---
         st.dataframe(
-            filtered_df.reset_index(drop=True), # Reset index for clean display
+            filtered_df.reset_index(drop=True),
             use_container_width=True,
-            # Ensure timestamp converts correctly for sorting, handle potential errors
-            column_config={
-                 "added_timestamp": st.column_config.DatetimeColumn("Timestamp", format="YYYY-MM-DD HH:mm")
-            }
+            column_config={ "added_timestamp": st.column_config.DatetimeColumn("Timestamp", format="YYYY-MM-DD HH:mm") }
         )
         st.caption(f"Showing {len(filtered_df)} matching questions.")
-
-        # --- Add Clear Bank Button ---
-        st.markdown("---")
-        st.markdown("##### Manage Bank")
-
-        # Use checkbox key with session state for persistence across reruns
-        st.checkbox("⚠️ Confirm: I want to delete ALL questions.", key="confirm_clear", value=st.session_state.get("confirm_clear", False))
-
-        # Pass current checkbox state to disabled argument
-        if st.button("Clear Entire Question Bank", type="secondary", disabled=not st.session_state.confirm_clear, use_container_width=True):
-            if st.session_state.confirm_clear:
-                with st.spinner("Clearing question bank..."):
-                    success = clear_question_bank() # Call the function from utils.py
-                if success:
-                    st.success("Question bank cleared successfully!")
-                    st.session_state.confirm_clear = False # Reset checkbox state
-                    st.rerun() # Rerun to refresh the view (bank_df will be empty)
-                else:
-                    st.error("Failed to clear question bank. Check terminal logs.")
-            # No need for else here as button is disabled if not confirmed
 
     else:
         st.info("Question bank is empty or could not be loaded.")
